@@ -1,7 +1,9 @@
 import asynchandler from "../utils/asynchandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import User from "../model/user.model.js";
+import { User } from "../model/user.model.js";
+import vaildator from "email-validator";
+import jwt from "jsonwebtoken";
 const generateAccessANDRefreshToken = async (userId) => {
   const user = await User.findById(userId);
 

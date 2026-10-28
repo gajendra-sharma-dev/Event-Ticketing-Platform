@@ -24,39 +24,37 @@ const userSchema = new Schema({
 });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified(this.password)) return;
+  if (!this.isModified("password")) return;
   this.password = await bcryptjs.hash(this.password, 10);
 });
 
-userSchema.methods.isPasswordCorrect = async (password) => {
+userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcryptjs.compare(password, this.password);
 };
 
-userSchema.methods.genraterefreshToken = async () => {
-  return (
-    await jwt.sign(
-      {
-        _id: _id,
-        username: username,
-        email: email,
-      },
-      process.env.REFRESH_TOKEN_KEY,
-    ),
-    { expiresIn: process.env.REFRESH_TOKEN_EXPRIY }
+userSchema.methods.genraterefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      username: this.username,
+      email: this.email,
+    },
+    process.env.REFRESH_TOKEN_KEY,
+
+    { expiresIn: process.env.REFRESH_TOKEN_EXPRIY },
   );
 };
 
-userSchema.methods.genrateAccessToken = async () => {
-  return (
-    await jwt.sign(
-      {
-        _id: _id,
-        username: username,
-        email: email,
-      },
-      process.env.ACCESS_TOKEN_KEY,
-    ),
-    { expiresIn: process.env.ACCESS_TOKEN_EXPRIY }
+userSchema.methods.genrateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      username: this.username,
+      email: this.email,
+    },
+    process.env.ACCESS_TOKEN_KEY,
+
+    { expiresIn: process.env.ACCESS_TOKEN_EXPRIY },
   );
 };
 export const User = mongoose.model("User", userSchema);

@@ -2,9 +2,9 @@ import asynchandler from "../utils/asynchandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import User from "../model/user.model.js";
+import { User } from "../model/user.model.js";
 
-export const VerifyJWT = async (req, res, next) => {
+export const VerifyJWT = asynchandler(async (req, res, next) => {
   try {
     const token =
       req.cookies?.accessToken ||
@@ -14,8 +14,12 @@ export const VerifyJWT = async (req, res, next) => {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodeToken = await jwt.verify(process.env.ACCESS_TOKEN_KEY, token);
-    const user = await User.findById(decodeToken?._id);
+    const decodeToken = await jwt.verify(token, process.env.ACCESS_TOKEN_KEY);
+
+    const user = await User.findById(decodeToken?._id).select(
+      "-password -refreshToken",
+    );
+
     if (!user) {
       throw new ApiError(401, "Invaild token");
     }
@@ -24,4 +28,4 @@ export const VerifyJWT = async (req, res, next) => {
   } catch (error) {
     throw new ApiError(400, error?.message, "Invaild token");
   }
-};
+});
