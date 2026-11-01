@@ -4,6 +4,7 @@ import { UserContext } from "@/context/AuthProvider";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "../components/ui/toast";
+import Link from "next/link";
 import {
   Field,
   FieldDescription,
@@ -16,7 +17,7 @@ import { useContext, useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 
 export function SignupForm({ className, ...props }) {
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
   const { register } = useContext(UserContext);
 
@@ -29,6 +30,7 @@ export function SignupForm({ className, ...props }) {
   });
 
   const onSubmit = async (data) => {
+    setError("");
     try {
       await register(data);
       router.replace("/dashboard");
@@ -37,11 +39,7 @@ export function SignupForm({ className, ...props }) {
         description: "sign-up successfully",
       });
     } catch (error) {
-      setError(
-        error?.response?.data?.errors ||
-          error?.response?.data.message ||
-          "signup failed",
-      );
+      setError(error?.response?.data?.message);
       toast.add({
         title: "Error",
         description: "sign-up Failed",
@@ -61,6 +59,7 @@ export function SignupForm({ className, ...props }) {
           <p className="text-sm text-balance text-muted-foreground">
             Fill in the form below to create your account
           </p>
+          {error && <p className="text-red-700">{error}</p>}
         </div>
         <Controller
           name="username"
@@ -131,7 +130,7 @@ export function SignupForm({ className, ...props }) {
           Sign up with GitHub
         </Button>
         <FieldDescription className="px-6 text-center">
-          Already have an account? <a href="#">Sign in</a>
+          Already have an account? <Link href="/login">Login</Link>
         </FieldDescription>
       </FieldGroup>
     </form>
