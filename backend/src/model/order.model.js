@@ -11,6 +11,7 @@ const orderSchema = new Schema(
     totelAmmout: {
       type: Number,
       required: true,
+      min: 0,
     },
     customer: {
       type: mongoose.Types.ObjectId,

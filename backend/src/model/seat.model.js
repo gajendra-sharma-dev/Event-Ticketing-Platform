@@ -24,7 +24,7 @@ const seatSchema = new Schema(
       type: String,
       required: true,
     },
-    row: {
+    rows: {
       type: String,
       required: true,
     },

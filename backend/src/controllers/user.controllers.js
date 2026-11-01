@@ -20,7 +20,9 @@ const generateAccessANDRefreshToken = async (userId) => {
 const registerUser = asynchandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  if ([username, email, password].some((filed) => filed.trim() === "")) {
+  if (
+    [username, email, password].some((filed) => !filed || filed.trim() === "")
+  ) {
     throw new ApiError(400, "all filed is required");
   }
 
