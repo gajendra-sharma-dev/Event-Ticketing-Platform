@@ -64,7 +64,7 @@ const loginUser = asynchandler(async (req, res) => {
   }
 
   if (!email || email.trim() === "") {
-    throw new ApiError(400, "password is reuired");
+    throw new ApiError(400, "email is reuired");
   }
 
   const user = await User.findOne({ email: email });
@@ -100,7 +100,7 @@ const loginUser = asynchandler(async (req, res) => {
 });
 
 const logout = asynchandler(async (req, res) => {
-  User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     { $unset: { refreshToken: 1 } },
     { new: true },
@@ -175,11 +175,11 @@ const updatePassword = asynchandler(async (req, res) => {
   const { oldpassword, newpassword } = req.body;
 
   if (!oldpassword) {
-    throw new ApiError("old password is required");
+    throw new ApiError(400, "old password is required");
   }
 
   if (!newpassword) {
-    throw new ApiError("new password is required");
+    throw new ApiError(400, "new password is required");
   }
 
   const user = await User.findById(req.user?._id);
@@ -199,7 +199,7 @@ const updatePassword = asynchandler(async (req, res) => {
 const UpdateUserDetail = asynchandler(async (req, res) => {
   const { username, email } = req.body;
 
-  if ([username, email].some((filed) => filed.trim() === "")) {
+  if ([username, email].some((filed) => !filed || filed.trim() === "")) {
     throw new ApiError(400, "all filed is required");
   }
 

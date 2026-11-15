@@ -6,15 +6,17 @@ import mongoose from "mongoose";
 import { Event } from "../model/event.model.js";
 
 const createEvent = asynchandler(async (req, res) => {
-  const { name, city, user, descrpition, Status } = req.body;
+  const { name, city, descrpition, Status } = req.body;
 
-  if ([name, city, descrpition, Status].some((filed) => filed.trim() === "")) {
+  if (
+    [name, city, descrpition, Status].some(
+      (filed) => !filed || filed.trim() === "",
+    )
+  ) {
     throw new ApiError(400, "all filed is required");
   }
-  if (!mongoose.isValidObjectId(user)) {
-    throw new ApiError(400, "user id is not correct from");
-  }
-  const exitingUser = await User.findOne({ user: req.user?._id });
+
+  const exitingUser = await User.findById(req.user?._id);
 
   if (!exitingUser) {
     throw new ApiError(400, "user not found");
@@ -39,7 +41,7 @@ const getAllEvent = asynchandler(async (req, res) => {
 
     const event = await Event.find()
       .sort({ createdAt: -1 })
-      .skip((page - 1) * 10)
+      .skip((page - 1) * limit)
       .limit(limit);
 
     const totel = await Event.countDocuments();
@@ -64,7 +66,7 @@ const GetEventById = asynchandler(async (req, res) => {
     throw new ApiError(400, "event id is not correct from");
   }
 
-  const event = await Event.findOne(EventId);
+  const event = await Event.findById(EventId);
 
   if (!event) {
     throw new ApiError(400, "event not create yet");
@@ -79,7 +81,11 @@ const updateEvent = asynchandler(async (req, res) => {
   const { name, city, descrpition, Status } = req.body;
   const { EventId } = req.params;
 
-  if ([name, city, descrpition, Status].some((filed) => filed.trim() === "")) {
+  if (
+    [name, city, descrpition, Status].some(
+      (filed) => !filed || filed.trim() === "",
+    )
+  ) {
     throw new ApiError(400, "all filed is required");
   }
 
@@ -97,8 +103,8 @@ const updateEvent = asynchandler(async (req, res) => {
     throw new ApiError(400, "you can not authorised to update this event");
   }
 
-  const updatedEvent = await Event.findByIdAndUpdate(
-    req.user._id,
+  const updatedevent = await Event.findByIdAndUpdate(
+    EventId,
     {
       $set: {
         name,
@@ -112,7 +118,7 @@ const updateEvent = asynchandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updateEvent, "event update successfully"));
+    .json(new ApiResponse(200, updateevent, "event update successfully"));
 });
 
 const DeleteEvent = asynchandler(async (req, res) => {

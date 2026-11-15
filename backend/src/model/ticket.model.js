@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 const ticketSchema = new Schema(
   {
-    evnet: {
+    evnetId: {
       type: mongoose.Types.ObjectId,
       ref: "Event",
     },
@@ -14,7 +14,15 @@ const ticketSchema = new Schema(
       type: mongoose.Types.ObjectId,
       ref: "Order",
     },
-    code: uuidv4(),
+    code: {
+      type: String,
+      unique: true,
+      default: () => uuidv4(),
+    },
+    checkedInAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
