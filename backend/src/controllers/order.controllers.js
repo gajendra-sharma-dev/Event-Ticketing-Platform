@@ -139,6 +139,9 @@ const getOrderById = asynchandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, order, "order get successfully "));
 });
+// PATCH /orders/:orderId/refund
+// only the event owner can refund. PAID -> REFUNDED, tickets deleted, seats released.
+// NOTE: this does not send money back, call the payment gateway refund API separately.
 
 const refundedOrder = asynchandler(async (req, res) => {
   const { orderId } = req.params;
@@ -190,3 +193,89 @@ const refundedOrder = asynchandler(async (req, res) => {
   }
   return res.status(200, refundedOrder, "order refund successfully");
 });
+
+// PENDING -> CANCELLED and the held seats go back to AVAILABLE
+const cancelOrder = asynchandler(async (req, res) => {
+  const { orderId } = req.params;
+
+  if (!mongoose.isValidObjectId(orderId)) {
+    throw new ApiError(400, "order id is not correct from");
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) {
+    throw new ApiError(400, "order not found");
+  }
+  if (order.customer?.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "you can not authorised to cancelSeat this order");
+  }
+
+  if (order.Status !== "PANDDING") {
+    throw new ApiError(
+      400,
+      "only padding order can be cancel,paid order need refund",
+    );
+  }
+  const session = await mongoose.startSession();
+  let cancelledOrder;
+
+  try {
+    await session.withTransaction(async () => {
+      cancelledOrder = await Order.findByIdAndDelete(
+        { _id: orderId, Status: "PANDDING" },
+        { $set: { Status: "CANCELLED" } },
+        { new: true, session },
+      );
+
+      if (!cancelledOrder) {
+        throw new ApiError(400, "order status changed,please try again");
+      }
+      await Seat.updateMany(
+        { _id: { $in: order.seats }, Status: "HELD" },
+        { $set: { Status: "AVAILABLE" } },
+        { session },
+      );
+    });
+  } finally {
+    await session.endSession();
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cancelledOrder, "order cancel successfully"));
+});
+const getMyOrders = asynchandler(async (req, res) => {
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
+
+  const filter = { customer: req.user?._id };
+  const allowed = ["PANDDING", "PAID", "CANCELLED", "REFUNDED"];
+  if (req.query.status && allowed.includes(req.query.status.toUpperCase())) {
+    filter.Status = req.query.status.toUpperCase();
+  }
+  const orders = await Order.find(filter)
+    .populate("eventId", "name city")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  const totel = await Order.countDocuments(filter);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { page, totel, pages: Math.ceil(totel / limit), orders },
+        "orders get successfully",
+      ),
+    );
+});
+
+export {
+  createOrder,
+  payOrder,
+  getOrderById,
+  getMyOrders,
+  cancelOrder,
+  refundedOrder,
+};
