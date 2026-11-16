@@ -188,7 +188,7 @@ const getTicketByEventId = asynchandler(async (req, res) => {
 
 //only event owner can check in tickets
 
-const checkInTicket = asynchandler(async (req, res) => {
+const checkInTickets = asynchandler(async (req, res) => {
   const { code } = req.body;
 
   if (!code || code.trim() === "") {
@@ -215,7 +215,7 @@ const checkInTicket = asynchandler(async (req, res) => {
     { $set: { checkedInAt: new Date() } },
     { new: true },
   );
-  if (!checkInTicket) {
+  if (!checkedInTicket) {
     throw new ApiError(409, "ticket already checked in");
   }
   return res
@@ -273,5 +273,5 @@ export {
   getTicketByOrderId,
   getTicketById,
   deleteTicket,
-  checkInTicket,
+  checkInTickets,
 };
