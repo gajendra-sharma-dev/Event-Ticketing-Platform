@@ -47,6 +47,13 @@ import getSeatByEventRouter from "./router/seat.router.js";
 import updatedSeatRouter from "./router/seat.router.js";
 import deleteSeatRouter from "./router/seat.router.js";
 
+import createTicketRouter from "./router/ticket.router.js";
+import getTicketByEventIdRouter from "./router/ticket.router.js";
+import getTicketOrderIdRouter from "./router/ticket.router.js";
+import getTicketByIdRouter from "./router/ticket.router.js";
+import deleteTicketRouter from "./router/ticket.router.js";
+import checkedTicketRouter from "./router/ticket.router.js";
+
 app.use("/api/v2/users", registerRouter);
 app.use("/api/v2/users", loginRouter);
 app.use("/api/v2/users", getUserRouter);
@@ -73,6 +80,13 @@ app.use("/api/v2/users/seats", getSeatByEventRouter);
 app.use("/api/v2/users/seats", getSeatByIdRouter);
 app.use("/api/v2/users/seats", updatedSeatRouter);
 app.use("/api/v2/users/seats", deleteSeatRouter);
+
+app.use("/api/v2/users/tickets", createTicketRouter);
+app.use("/api/v2/users/tickets", getTicketByEventIdRouter);
+app.use("/api/v2/users/tickets", getTicketByIdRouter);
+app.use("/api/v2/users/tickets", getTicketOrderIdRouter);
+app.use("/api/v2/users/tickets", deleteTicketRouter);
+app.use("/api/v2/users/tickets", checkedTicketRouter);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
