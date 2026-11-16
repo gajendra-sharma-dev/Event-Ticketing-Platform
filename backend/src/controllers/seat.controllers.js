@@ -7,6 +7,26 @@ import mongoose from "mongoose";
 import { Event } from "../model/event.model.js";
 
 const SEAT_STATUS = ["AVAILABLE", "HELD", "SOLD"];
+// body: { eventId, seats: [{ section, rows, number, price }, ...] }
+// only the event owner can add seats. All seats are saved, or none (transaction).
+// Note: transactions need MongoDB running as a replica set (Atlas has this by default).
+
+const createSeat = asynchandler(async (req, res) => {
+  const { eventId, seats } = req.body;
+
+  if (!mongoose.isValidObjectId(eventId)) {
+    throw new ApiResponse(400, "event id is not correct from");
+  }
+
+  if (Array.isArray(seats) || seats.length === 0) {
+    throw new ApiError(400, "seats must be none empty list");
+  }
+
+  if (seats.length > 500) {
+    throw new ApiError(400, "you can add maximum 500 seats at one time");
+  }
+});
+
 // used by the frontend to draw the seat map (returns every seat of the event)
 
 const getSeatByevent = asynchandler(async (req, res) => {
