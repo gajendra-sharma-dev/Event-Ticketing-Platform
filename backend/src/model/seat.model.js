@@ -12,10 +12,7 @@ const seatSchema = new Schema(
       type: Number,
       required: true,
     },
-    evnet: {
-      type: mongoose.Types.ObjectId,
-      ref: "Event",
-    },
+
     number: {
       type: Number,
       required: true,
@@ -27,6 +24,10 @@ const seatSchema = new Schema(
     rows: {
       type: String,
       required: true,
+    },
+    eventId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Event",
     },
   },
   { timestamps: true },
