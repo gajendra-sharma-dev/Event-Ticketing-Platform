@@ -4,8 +4,8 @@ const orderSchema = new Schema(
   {
     Status: {
       type: String,
-      enum: ["PANDDING", "PAID", "REFUNDED"],
-      default: "PANDDDING",
+      enum: ["PANDDING", "PAID", "CANCELLED", "REFUNDED"],
+      default: "PANDDING",
     },
 
     totelAmmout: {
@@ -17,6 +17,17 @@ const orderSchema = new Schema(
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
+
+    eventId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Event",
+    },
+    seats: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Seat",
+      },
+    ],
   },
   { timestamps: true },
 );
