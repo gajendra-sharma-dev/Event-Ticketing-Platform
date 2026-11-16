@@ -34,6 +34,19 @@ import getByIdEventRouter from "./router/event.router.js";
 import updateEventRouter from "./router/event.router.js";
 import deleteEventRouter from "./router/event.router.js";
 
+import createOrderRouter from "./router/order.router.js";
+import payOrderRouter from "./router/order.router.js";
+import refundedOrderRouter from "./router/order.router.js";
+import getOrderByIdRouter from "./router/order.router.js";
+import getMyOrderRouter from "./router/order.router.js";
+import cancelOrderRouter from "./router/order.router.js";
+
+import createSeatRouter from "./router/seat.router.js";
+import getSeatByIdRouter from "./router/seat.router.js";
+import getSeatByEventRouter from "./router/seat.router.js";
+import updatedSeatRouter from "./router/seat.router.js";
+import deleteSeatRouter from "./router/seat.router.js";
+
 app.use("/api/v2/users", registerRouter);
 app.use("/api/v2/users", loginRouter);
 app.use("/api/v2/users", getUserRouter);
@@ -47,6 +60,19 @@ app.use("/api/v2/users/event", getAllEventRouter);
 app.use("/api/v2/users/event", getByIdEventRouter);
 app.use("/api/v2/users/event", updateEventRouter);
 app.use("/api/v2/users/event", deleteEventRouter);
+
+app.use("/api/v2/users/order", createOrderRouter);
+app.use("/api/v2/users/order", payOrderRouter);
+app.use("/api/v2/users/order", refundedOrderRouter);
+app.use("/api/v2/users/order", getOrderByIdRouter);
+app.use("/api/v2/users/order", getMyOrderRouter);
+app.use("/api/v2/users/order", cancelOrderRouter);
+
+app.use("/api/v2/users/seats", createSeatRouter);
+app.use("/api/v2/users/seats", getSeatByEventRouter);
+app.use("/api/v2/users/seats", getSeatByIdRouter);
+app.use("/api/v2/users/seats", updatedSeatRouter);
+app.use("/api/v2/users/seats", deleteSeatRouter);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

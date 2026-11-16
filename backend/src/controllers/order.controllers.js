@@ -221,7 +221,7 @@ const cancelOrder = asynchandler(async (req, res) => {
 
   try {
     await session.withTransaction(async () => {
-      cancelledOrder = await Order.findByIdAndDelete(
+      cancelledOrder = await Order.findByIdAndUpdate(
         { _id: orderId, Status: "PANDDING" },
         { $set: { Status: "CANCELLED" } },
         { new: true, session },
