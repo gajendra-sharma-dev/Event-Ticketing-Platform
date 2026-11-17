@@ -4,13 +4,13 @@ function Navbar() {
   return (
     <div className="navbar bg-base-100 shadow-sm">
       <div className="flex-1">
-        <a className="btn btn-ghost text-xl">daisyUI</a>
+        <a className="btn btn-ghost text-xl">TicketShows</a>
       </div>
       <div className="flex gap-2">
         <input
           type="text"
           placeholder="Search"
-          className="input w-24 md:w-auto"
+          className="input w-24 md:w-auto border-2 bg-white"
         />
         <div className="dropdown dropdown-end">
           <div
@@ -27,7 +27,7 @@ function Navbar() {
           </div>
           <ul
             tabIndex={-1}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+            className="menu menu-sm dropdown-content bg-white rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
             <li>
               <a className="justify-between">
