@@ -9,7 +9,6 @@ import {
 } from "../controllers/order.controllers.js";
 
 import { VerifyJWT } from "../middleware/Auth.middleware.js";
-import { verify } from "jsonwebtoken";
 
 const router = Router();
 router.use(VerifyJWT);

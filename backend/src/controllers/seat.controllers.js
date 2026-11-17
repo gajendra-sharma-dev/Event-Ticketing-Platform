@@ -18,7 +18,7 @@ const createSeat = asynchandler(async (req, res) => {
     throw new ApiResponse(400, "event id is not correct from");
   }
 
-  if (Array.isArray(seats) || seats.length === 0) {
+  if (!Array.isArray(seats) || seats.length === 0) {
     throw new ApiError(400, "seats must be none empty list");
   }
 
@@ -45,7 +45,7 @@ const createSeat = asynchandler(async (req, res) => {
   if (!event) {
     throw new ApiError(404, "event not found");
   }
-  if (event.user?.toString() !== req.user?._toString()) {
+  if (event.user?.toString() !== req.user?._id.toString()) {
     throw new ApiError(
       403,
       "you can not authorised to add seats for this event",
@@ -174,7 +174,7 @@ const updatedSeats = asynchandler(async (req, res) => {
     (update.number = number),
     (update.price = price));
 
-  if (object.keys(update).length === 0) {
+  if (Object.keys(update).length === 0) {
     throw new ApiError(400, "no update data provided");
   }
 

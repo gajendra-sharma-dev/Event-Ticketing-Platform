@@ -60,13 +60,13 @@ const getAllEvent = asynchandler(async (req, res) => {
 });
 
 const GetEventById = asynchandler(async (req, res) => {
-  const { EventId } = req.params;
+  const { eventId } = req.params;
 
-  if (!mongoose.isValidObjectId(EventId)) {
+  if (!mongoose.isValidObjectId(eventId)) {
     throw new ApiError(400, "event id is not correct from");
   }
 
-  const event = await Event.findById(EventId);
+  const event = await Event.findById(eventId);
 
   if (!event) {
     throw new ApiError(400, "event not create yet");
@@ -79,7 +79,7 @@ const GetEventById = asynchandler(async (req, res) => {
 
 const updateEvent = asynchandler(async (req, res) => {
   const { name, city, descrpition, Status } = req.body;
-  const { EventId } = req.params;
+  const { eventId } = req.params;
 
   if (
     [name, city, descrpition, Status].some(
@@ -89,11 +89,11 @@ const updateEvent = asynchandler(async (req, res) => {
     throw new ApiError(400, "all filed is required");
   }
 
-  if (!mongoose.isValidObjectId(EventId)) {
+  if (!mongoose.isValidObjectId(eventId)) {
     throw new ApiError(400, "event id is not correct from");
   }
 
-  const event = await Event.findById(EventId);
+  const event = await Event.findById(eventId);
 
   if (!event) {
     throw new ApiError(400, "event you want to update is not found");
@@ -104,7 +104,7 @@ const updateEvent = asynchandler(async (req, res) => {
   }
 
   const updatedevent = await Event.findByIdAndUpdate(
-    EventId,
+    eventId,
     {
       $set: {
         name,
@@ -118,17 +118,17 @@ const updateEvent = asynchandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updateevent, "event update successfully"));
+    .json(new ApiResponse(200, updatedevent, "event update successfully"));
 });
 
 const DeleteEvent = asynchandler(async (req, res) => {
-  const { EventId } = req.params;
+  const { eventId } = req.params;
 
-  if (!mongoose.isValidObjectId(EventId)) {
+  if (!mongoose.isValidObjectId(eventId)) {
     throw new ApiError(400, "event id is not correct from");
   }
 
-  const event = await Event.findById(EventId);
+  const event = await Event.findById(eventId);
 
   if (!event) {
     throw new ApiError(400, "event you want to delete is not found");
@@ -137,7 +137,7 @@ const DeleteEvent = asynchandler(async (req, res) => {
   if (event?.user?.toString() !== req.user?._id.toString()) {
     throw new ApiError(400, "you can not authorised to delete this event");
   }
-  await Event.findByIdAndDelete(EventId);
+  await Event.findByIdAndDelete(eventId);
 
   return res
     .status(200)

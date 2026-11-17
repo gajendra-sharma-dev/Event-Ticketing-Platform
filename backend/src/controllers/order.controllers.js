@@ -63,7 +63,7 @@ const createOrder = asynchandler(async (req, res) => {
         throw new ApiError(409, "one or more seats are not available");
       }
 
-      const order = await Order.create(
+      const created = await Order.create(
         [
           {
             customer: req.user?._id,
@@ -128,7 +128,7 @@ const getOrderById = asynchandler(async (req, res) => {
   }
   const order = await Order.findById(orderId)
     .populate("eventId")
-    .populate("seatId");
+    .populate("seats");
   if (!order) {
     throw new ApiError(404, "order not found");
   }
@@ -153,9 +153,13 @@ const refundedOrder = asynchandler(async (req, res) => {
   if (!order) {
     throw new ApiError(400, "order not found");
   }
-  if (order.eventId?.toString() !== req.user?._id.toString()) {
+  console.log("orderEventId", order.eventId?.user);
+  console.log("req.user", req.user?._id);
+
+  if (order.eventId?.user?.toString() !== req.user?._id.toString()) {
     throw new ApiError(403, "you can not authorised to refund this order");
   }
+  console.log(order.Status);
 
   if (order.Status !== "PAID") {
     throw new ApiError(400, "only paid order can be refunded");
@@ -191,7 +195,9 @@ const refundedOrder = asynchandler(async (req, res) => {
   } finally {
     await session.endSession();
   }
-  return res.status(200, refundedOrder, "order refund successfully");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, refundedOrder, "order refund successfully"));
 });
 
 // PENDING -> CANCELLED and the held seats go back to AVAILABLE

@@ -13,8 +13,8 @@ const router = Router();
 router.use(VerifyJWT);
 router.route("/createEvent").post(createEvent);
 router.route("/getAllEvent").get(getAllEvent);
-router.route("/getEventById/:evn").get(GetEventById);
-router.route("/updateEvent").patch(updateEvent);
-router.route("/deleteEvent").delete(DeleteEvent);
+router.route("/getEventById/:eventId").get(GetEventById);
+router.route("/updateEvent/:eventId").patch(updateEvent);
+router.route("/deleteEvent/:eventId").delete(DeleteEvent);
 
 export default router;
