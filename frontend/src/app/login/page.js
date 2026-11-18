@@ -1,8 +1,10 @@
 "use client";
-import { useState } from "react";
+import { UserContext } from "@/context/AuthProvider";
+import { useContext, useEffect, useState } from "react";
 
 export default function LoginPage() {
   const [showSignup, setShowSignup] = useState(false);
+  const { user, login, loading } = useContext(UserContext);
 
   return (
     <main className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
