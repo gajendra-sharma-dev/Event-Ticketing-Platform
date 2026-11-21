@@ -7,53 +7,49 @@ import { UserContext } from "@/context/AuthProvider";
 export default function Navbar() {
   const { user, logout } = useContext(UserContext);
   const router = useRouter();
-
-  const handleLogout = async () => {
+  const out = async () => {
     await logout();
     router.push("/");
   };
 
   return (
-    <div className="navbar bg-neutral-500 shadow-sm px-4">
-      <div className="flex-1">
-        <Link href="/" className="btn btn-ghost text-xl">
-          TicketShows
+    <header className="sticky top-0 z-30 px-4 pt-3">
+      <nav className="glass max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-extrabold text-xl"
+        >
+          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-violet-600 grid place-items-center text-white rotate-6">
+            🎟
+          </span>
+          <span className="grad-text">TicketShows</span>
         </Link>
-      </div>
-      <div className="flex gap-2 items-center">
-        {user ? (
-          <div className="dropdown dropdown-end">
-            <div
-              tabIndex={0}
-              role="button"
-              className="btn btn-sm bg-white text-stone-900 border-none"
-            >
-              {user.username || "Account"}
-            </div>
-            <ul
-              tabIndex={-1}
-              className="menu menu-sm dropdown-content bg-white text-stone-800 rounded-box z-10 mt-3 w-52 p-2 shadow"
-            >
-              <li>
-                <Link href="/orders">My orders</Link>
-              </li>
-              <li>
-                <Link href="/dashboard">Organizer dashboard</Link>
-              </li>
-              <li>
-                <button onClick={handleLogout}>Logout</button>
-              </li>
-            </ul>
-          </div>
-        ) : (
-          <Link
-            href="/login"
-            className="btn btn-sm bg-red-500 hover:bg-red-600 text-white border-none"
-          >
-            Login
-          </Link>
-        )}
-      </div>
-    </div>
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          {user ? (
+            <>
+              <Link href="/orders" className="btn btn-sm btn-soft">
+                My orders
+              </Link>
+              <Link
+                href="/dashboard"
+                className="btn btn-sm btn-soft hidden sm:inline-flex"
+              >
+                Dashboard
+              </Link>
+              <span className="hidden md:inline px-3 text-violet-700">
+                Hi, {user.username}
+              </span>
+              <button onClick={out} className="btn btn-sm btn-grad">
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link href="/login" className="btn btn-sm btn-grad">
+              Login
+            </Link>
+          )}
+        </div>
+      </nav>
+    </header>
   );
 }
