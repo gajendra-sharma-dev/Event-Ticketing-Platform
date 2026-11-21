@@ -1,23 +1,42 @@
 "use client";
 import Link from "next/link";
-import { useContext, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "@/context/AuthProvider";
 import { eventApi, errMsg } from "@/db/api";
 
-const GRADS = [
-  "from-rose-500 to-orange-400",
-  "from-violet-600 to-fuchsia-500",
-  "from-cyan-500 to-blue-600",
-  "from-emerald-500 to-teal-400",
-  "from-amber-400 to-pink-500",
-  "from-indigo-500 to-sky-400",
+const TINTS = [
+  ["#fb7185", "#fb923c"],
+  ["#7c3aed", "#d946ef"],
+  ["#06b6d4", "#2563eb"],
+  ["#10b981", "#14b8a6"],
+  ["#f59e0b", "#ec4899"],
+  ["#6366f1", "#38bdf8"],
 ];
+const bg = (i) =>
+  `linear-gradient(135deg, ${TINTS[i % TINTS.length][0]}, ${TINTS[i % TINTS.length][1]})`;
+
+function Poster({ ev, i, className = "" }) {
+  return (
+    <div
+      className={`grid place-items-center text-white font-black ${className}`}
+      style={{ background: bg(i) }}
+    >
+      <span className="text-7xl drop-shadow">
+        {ev.name?.[0]?.toUpperCase()}
+      </span>
+    </div>
+  );
+}
 
 export default function Hero() {
   const { user, loading: authLoading } = useContext(UserContext);
+  const q = (useSearchParams().get("q") || "").toLowerCase();
   const [events, setEvents] = useState([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [city, setCity] = useState("");
+  const [slide, setSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -29,7 +48,7 @@ export default function Hero() {
     }
     setLoading(true);
     eventApi
-      .get("/getAllEvent", { params: { page, limit: 9 } })
+      .get("/getAllEvent", { params: { page, limit: 12 } })
       .then((r) => {
         setEvents(r.data.data.event);
         setPages(r.data.data.pages || 1);
@@ -38,113 +57,168 @@ export default function Hero() {
       .finally(() => setLoading(false));
   }, [page, user, authLoading]);
 
+  const cities = useMemo(
+    () => [...new Set(events.map((e) => e.city))],
+    [events],
+  );
+  const shown = events.filter(
+    (e) =>
+      (!city || e.city === city) &&
+      (!q || `${e.name} ${e.city}`.toLowerCase().includes(q)),
+  );
+  const slides = events.slice(0, 5);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const t = setInterval(() => setSlide((s) => (s + 1) % slides.length), 5000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
+  const cur = slides[slide % (slides.length || 1)];
+  const go = (d) => setSlide((s) => (s + d + slides.length) % slides.length);
+
   return (
     <>
-      <section className="max-w-6xl mx-auto px-6 pt-12 pb-6 grid md:grid-cols-2 gap-10 items-center">
-        <div>
-          <span className="badge border-0 bg-violet-100 text-violet-700 font-semibold mb-4">
-            🔥 Live shows near you
-          </span>
-          <h1 className="text-5xl md:text-7xl font-black leading-[1.05]">
-            Feel the <span className="grad-text">moment</span>,<br />
-            book your seat.
-          </h1>
-          <p className="mt-5 text-lg text-slate-600 max-w-md">
-            Concerts, comedy, sports and more. Pick your exact seat on a live
-            seat map and get your ticket in seconds.
-          </p>
-          <div className="mt-7 flex gap-3">
-            <a href="#events" className="btn btn-grad btn-lg rounded-2xl">
-              Explore events
-            </a>
-            {!user && (
-              <Link href="/login" className="btn btn-lg btn-soft rounded-2xl">
-                Login
-              </Link>
-            )}
-          </div>
+      {/* HERO CAROUSEL */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          background: cur
+            ? `linear-gradient(90deg, ${TINTS[slide % 6][0]}22, #fff 70%)`
+            : "#f5f3ff",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-16 py-14 grid md:grid-cols-2 gap-10 items-center min-h-[420px]">
+          {cur ? (
+            <>
+              <div key={cur._id} className="poster-in">
+                <p className="font-semibold text-neutral-600">📍 {cur.city}</p>
+                <h1 className="mt-3 text-5xl md:text-6xl font-black leading-tight">
+                  {cur.name}
+                </h1>
+                <p className="mt-4 text-lg text-neutral-600 line-clamp-2 max-w-md">
+                  {cur.descrpition}
+                </p>
+                <Link
+                  href={`/events/${cur._id}`}
+                  className="mt-8 inline-flex items-center px-10 h-16 rounded-2xl bg-neutral-900 text-white text-xl font-bold hover:bg-neutral-700 transition"
+                >
+                  Book tickets
+                </Link>
+              </div>
+              <div
+                key={cur._id + "p"}
+                className="poster-in hidden md:flex justify-end"
+              >
+                <Poster
+                  ev={cur}
+                  i={slide}
+                  className="w-80 h-[22rem] rounded-2xl shadow-2xl"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="md:col-span-2 text-center">
+              <h1 className="text-5xl font-black">Find your next plan</h1>
+              <p className="mt-3 text-neutral-600">
+                {user || authLoading ? (
+                  "No events yet."
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="underline font-bold text-[#5b2be0]"
+                    >
+                      Log in
+                    </Link>{" "}
+                    to browse events and book seats.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* 3D floating tickets */}
-        <div className="scene h-80 md:h-96 grid place-items-center">
-          <div className="ticket3d relative w-64 h-40">
-            {GRADS.slice(0, 3).map((g, i) => (
-              <div
-                key={i}
-                className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${g} text-white p-5 shadow-2xl flex flex-col justify-between`}
-                style={{
-                  transform: `translateZ(${i * 45 - 45}px) translateY(${i * -22}px)`,
-                }}
-              >
-                <div className="flex justify-between text-xs font-bold tracking-widest opacity-90">
-                  <span>ADMIT ONE</span>
-                  <span>VIP</span>
-                </div>
-                <p className="text-2xl font-black">
-                  {["CONCERT", "COMEDY", "SPORTS"][i]}
-                </p>
-                <div className="h-2 rounded bg-white/40" />
-              </div>
-            ))}
-          </div>
-        </div>
+        {slides.length > 1 && (
+          <>
+            <button
+              onClick={() => go(-1)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-3xl px-2"
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => go(1)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl px-2"
+              aria-label="Next"
+            >
+              ›
+            </button>
+            <div className="flex justify-center gap-2 pb-5">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSlide(i)}
+                  aria-label={`Slide ${i + 1}`}
+                  className={`h-2 rounded-full transition-all ${i === slide ? "w-8 bg-neutral-900" : "w-2 bg-neutral-300"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
-      <section id="events" className="max-w-6xl mx-auto px-6 py-10">
-        <h2 className="text-3xl font-extrabold mb-6">
-          Trending <span className="grad-text">events</span>
+      {/* EVENTS GRID */}
+      <section className="max-w-7xl mx-auto px-5 py-10">
+        <h2 className="text-2xl font-extrabold mb-4">
+          {q ? `Results for “${q}”` : "All events"}
         </h2>
 
-        {!user && !authLoading && (
-          <div className="glass p-8 text-center">
-            <Link href="/login" className="font-bold text-violet-600 underline">
-              Log in
-            </Link>{" "}
-            to browse events and book seats.
-          </div>
-        )}
-        {error && <p className="text-rose-600">{error}</p>}
-        {loading && user && <p className="text-slate-500">Loading events...</p>}
-        {user && !loading && events.length === 0 && (
-          <div className="glass p-8 text-center text-slate-500">
-            No events yet. Create one from the dashboard.
+        {cities.length > 1 && (
+          <div className="flex gap-2 flex-wrap mb-6">
+            {["", ...cities].map((c) => (
+              <button
+                key={c || "all"}
+                onClick={() => setCity(c)}
+                className={`px-4 py-1.5 rounded-full border text-sm font-semibold ${city === c ? "bg-neutral-900 text-white border-neutral-900" : "border-neutral-300 hover:bg-neutral-50"}`}
+              >
+                {c || "All cities"}
+              </button>
+            ))}
           </div>
         )}
 
-        <div className="scene grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((ev, i) => (
-            <div key={ev._id} className="tilt glass overflow-hidden">
-              <div
-                className={`h-36 bg-gradient-to-br ${GRADS[i % GRADS.length]} grid place-items-center text-white text-6xl font-black`}
+        {error && <p className="text-rose-600">{error}</p>}
+        {loading && user && (
+          <p className="text-neutral-500">Loading events...</p>
+        )}
+        {user && !loading && shown.length === 0 && (
+          <p className="text-neutral-500">No events found.</p>
+        )}
+
+        <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {shown.map((ev) => {
+            const i = events.indexOf(ev);
+            return (
+              <Link
+                key={ev._id}
+                href={`/events/${ev._id}`}
+                className="tilt block"
               >
-                <span className="floaty drop-shadow-lg">
-                  {ev.name?.[0]?.toUpperCase()}
-                </span>
-              </div>
-              <div className="p-5 space-y-2">
-                <h3 className="text-xl font-bold">{ev.name}</h3>
-                <p className="text-sm text-violet-600 font-semibold">
-                  📍 {ev.city}
-                </p>
-                <p className="text-slate-600 line-clamp-2 text-sm">
-                  {ev.descrpition}
-                </p>
-                <div className="flex justify-between items-center pt-2">
-                  <span
-                    className={`badge border-0 ${ev.Status === "CANCELLED" ? "bg-rose-100 text-rose-600" : "bg-emerald-100 text-emerald-700"}`}
-                  >
-                    {ev.Status}
+                <Poster ev={ev} i={i} className="aspect-[4/5] rounded-2xl" />
+                <h3 className="mt-3 font-bold text-lg leading-snug line-clamp-1">
+                  {ev.name}
+                </h3>
+                <p className="text-sm text-neutral-500">📍 {ev.city}</p>
+                {ev.Status === "CANCELLED" && (
+                  <span className="text-xs font-bold text-rose-600">
+                    CANCELLED
                   </span>
-                  <Link
-                    href={`/events/${ev._id}`}
-                    className="btn btn-sm btn-grad rounded-xl"
-                  >
-                    Book seats →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {pages > 1 && (
