@@ -4,12 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { UserContext } from "@/context/AuthProvider";
 import { eventApi, seatApi, orderApi, errMsg } from "@/db/api";
 
-const seatStyle = {
-  AVAILABLE: "bg-white border-stone-300 hover:border-red-500",
-  HELD: "bg-amber-200 border-amber-300 cursor-not-allowed",
-  SOLD: "bg-stone-300 border-stone-300 text-stone-500 cursor-not-allowed",
-};
-
 export default function EventPage() {
   const { eventId } = useParams();
   const router = useRouter();
@@ -34,7 +28,6 @@ export default function EventPage() {
       .catch((e) => setError(errMsg(e)));
   }, [eventId, user, authLoading, router]);
 
-  // group seats: section -> row -> seats
   const grouped = useMemo(() => {
     const g = {};
     seats.forEach((s) => {
@@ -46,26 +39,22 @@ export default function EventPage() {
 
   const total = seats
     .filter((s) => selected.includes(s._id))
-    .reduce((sum, s) => sum + s.price, 0);
-
-  const toggle = (seat) => {
-    if (seat.Status !== "AVAILABLE") return;
-    setSelected((prev) =>
-      prev.includes(seat._id)
-        ? prev.filter((id) => id !== seat._id)
-        : [...prev, seat._id],
+    .reduce((a, s) => a + s.price, 0);
+  const toggle = (s) =>
+    s.Status === "AVAILABLE" &&
+    setSelected((p) =>
+      p.includes(s._id) ? p.filter((i) => i !== s._id) : [...p, s._id],
     );
-  };
 
   const book = async () => {
     setError("");
     try {
       setBooking(true);
-      const res = await orderApi.post("/createOrder", {
+      const r = await orderApi.post("/createOrder", {
         eventId,
         seatId: selected,
       });
-      router.push(`/orders/${res.data.data._id}`);
+      router.push(`/orders/${r.data.data._id}`);
     } catch (e) {
       setError(errMsg(e));
       setBooking(false);
@@ -73,91 +62,87 @@ export default function EventPage() {
   };
 
   if (error && !event)
-    return <p className="p-8 text-center text-red-600">{error}</p>;
+    return <p className="p-10 text-center text-rose-600">{error}</p>;
   if (!event)
-    return <p className="p-8 text-center text-stone-500">Loading...</p>;
-
+    return <p className="p-10 text-center text-slate-500">Loading...</p>;
   const cancelled = event.Status === "CANCELLED";
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold">{event.name}</h1>
-        <p className="text-stone-500">{event.city}</p>
-        <p className="mt-2 text-stone-700">{event.descrpition}</p>
-        {cancelled && (
-          <p className="mt-2 text-red-600 font-semibold">
-            This event is cancelled.
-          </p>
-        )}
+      <header className="glass overflow-hidden">
+        <div className="h-28 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-600" />
+        <div className="p-6 -mt-2">
+          <h1 className="text-3xl font-black">{event.name}</h1>
+          <p className="text-violet-600 font-semibold">📍 {event.city}</p>
+          <p className="mt-2 text-slate-600">{event.descrpition}</p>
+          {cancelled && (
+            <p className="mt-2 text-rose-600 font-bold">
+              This event is cancelled.
+            </p>
+          )}
+        </div>
       </header>
 
-      <div className="flex gap-4 text-sm">
-        <span>
-          <i className="inline-block w-4 h-4 border bg-white align-middle mr-1" />
-          Available
-        </span>
-        <span>
-          <i className="inline-block w-4 h-4 bg-red-500 align-middle mr-1" />
-          Selected
-        </span>
-        <span>
-          <i className="inline-block w-4 h-4 bg-amber-200 align-middle mr-1" />
-          Held
-        </span>
-        <span>
-          <i className="inline-block w-4 h-4 bg-stone-300 align-middle mr-1" />
-          Sold
-        </span>
+      <div className="glass p-6 space-y-6 scene">
+        <div className="stage mx-auto w-3/4 max-w-md text-center text-white font-black tracking-[.4em] py-2 rounded-xl">
+          STAGE
+        </div>
+
+        {seats.length === 0 && (
+          <p className="text-center text-slate-500">
+            The organizer has not added seats yet.
+          </p>
+        )}
+
+        <div className="space-y-6 overflow-x-auto pb-2">
+          {Object.entries(grouped).map(([section, rows]) => (
+            <div key={section} className="w-fit mx-auto">
+              <h2 className="font-bold mb-3 text-violet-700">
+                Section {section}
+              </h2>
+              {Object.entries(rows).map(([row, list]) => (
+                <div key={row} className="flex items-center gap-2 mb-3">
+                  <span className="w-14 shrink-0 text-xs font-semibold text-slate-400">
+                    Row {row}
+                  </span>
+                  {list.map((seat) => (
+                    <button
+                      key={seat._id}
+                      type="button"
+                      title={`₹${seat.price}`}
+                      disabled={seat.Status !== "AVAILABLE" || cancelled}
+                      onClick={() => toggle(seat)}
+                      className={`seat ${selected.includes(seat._id) ? "sel" : seat.Status === "HELD" ? "held" : seat.Status === "SOLD" ? "sold" : ""}`}
+                    >
+                      {seat.number}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-5 text-xs font-semibold text-slate-500">
+          <span>⬜ Available</span>
+          <span>🟥 Selected</span>
+          <span>🟨 Held</span>
+          <span>⬛ Sold</span>
+        </div>
       </div>
 
-      {seats.length === 0 && (
-        <p className="text-stone-500">The organizer has not added seats yet.</p>
-      )}
-
-      <div className="space-y-6 overflow-x-auto">
-        {Object.entries(grouped).map(([section, rows]) => (
-          <div key={section}>
-            <h2 className="font-semibold mb-2">Section {section}</h2>
-            {Object.entries(rows).map(([row, list]) => (
-              <div key={row} className="flex items-center gap-2 mb-2">
-                <span className="w-14 shrink-0 text-sm text-stone-500">
-                  Row {row}
-                </span>
-                {list.map((seat) => (
-                  <button
-                    key={seat._id}
-                    type="button"
-                    title={`₹${seat.price}`}
-                    disabled={seat.Status !== "AVAILABLE" || cancelled}
-                    onClick={() => toggle(seat)}
-                    className={`w-9 h-9 shrink-0 rounded border text-xs font-medium transition ${
-                      selected.includes(seat._id)
-                        ? "bg-red-500 border-red-500 text-white"
-                        : seatStyle[seat.Status]
-                    }`}
-                  >
-                    {seat.number}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      <div className="sticky bottom-0 bg-white border border-stone-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-        <p>
-          {selected.length} seat{selected.length !== 1 && "s"} selected ·{" "}
-          <b>₹{total}</b>
+      <div className="glass sticky bottom-4 p-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="font-semibold">
+          {selected.length} seat{selected.length !== 1 && "s"} ·{" "}
+          <span className="grad-text text-2xl font-black">₹{total}</span>
         </p>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-rose-600">{error}</p>}
         <button
           onClick={book}
-          disabled={selected.length === 0 || booking || cancelled}
-          className="btn bg-red-500 hover:bg-red-600 text-white border-none disabled:opacity-60"
+          disabled={!selected.length || booking || cancelled}
+          className="btn btn-grad rounded-xl"
         >
-          {booking ? "Holding seats..." : "Hold seats and continue"}
+          {booking ? "Holding seats..." : "Hold seats & continue →"}
         </button>
       </div>
     </div>

@@ -5,21 +5,13 @@ import { useRouter } from "next/navigation";
 import { UserContext } from "@/context/AuthProvider";
 import { eventApi, seatApi, ticketApi, errMsg } from "@/db/api";
 
-const field =
-  "w-full px-3 py-2 rounded-lg bg-stone-100 border border-stone-200 focus:outline-none focus:ring-2 focus:ring-red-500";
-const btn = "btn btn-sm bg-red-500 hover:bg-red-600 text-white border-none";
-
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useContext(UserContext);
   const [events, setEvents] = useState([]);
   const [msg, setMsg] = useState({ type: "", text: "" });
-  const [form, setForm] = useState({
-    name: "",
-    city: "",
-    descrpition: "",
-    Status: "PENDDING",
-  });
+  const empty = { name: "", city: "", descrpition: "", Status: "PENDDING" };
+  const [form, setForm] = useState(empty);
   const [seatForm, setSeatForm] = useState({
     eventId: "",
     section: "",
@@ -34,11 +26,9 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     try {
-      const res = await eventApi.get("/getAllEvent", {
-        params: { limit: 100 },
-      });
-      // backend lists every event, so keep only the ones I own
-      setEvents(res.data.data.event.filter((e) => e.user === user?._id));
+      const r = await eventApi.get("/getAllEvent", { params: { limit: 100 } });
+      const uid = String(user?._id || user?.user?._id || "");
+      setEvents(r.data.data.event.filter((e) => String(e.user) === uid));
     } catch (e) {
       say("error", errMsg(e));
     }
@@ -50,11 +40,11 @@ export default function Dashboard() {
     load();
   }, [authLoading, user, router, load]);
 
-  const run = async (fn, okText) => {
+  const run = async (fn, ok) => {
     say("", "");
     try {
       await fn();
-      say("ok", okText);
+      say("ok", ok);
       await load();
     } catch (e) {
       say("error", errMsg(e));
@@ -65,10 +55,9 @@ export default function Dashboard() {
     e.preventDefault();
     run(async () => {
       await eventApi.post("/createEvent", form);
-      setForm({ name: "", city: "", descrpition: "", Status: "PENDDING" });
-    }, "Event created.");
+      setForm(empty);
+    }, "Event created 🎉");
   };
-
   const toggleCancel = (ev) =>
     run(
       () =>
@@ -80,56 +69,49 @@ export default function Dashboard() {
         }),
       "Event updated.",
     );
-
-  const deleteEvent = (id) => {
-    if (confirm("Delete this event?"))
-      run(() => eventApi.delete(`/deleteEvent/${id}`), "Event deleted.");
-  };
-
+  const del = (id) =>
+    confirm("Delete this event?") &&
+    run(() => eventApi.delete(`/deleteEvent/${id}`), "Event deleted.");
   const addSeats = (e) => {
     e.preventDefault();
     const { eventId, section, rows, from, to, price } = seatForm;
     if (!eventId) return say("error", "Choose an event first.");
     const seats = [];
-    for (let n = Number(from); n <= Number(to); n++) {
+    for (let n = Number(from); n <= Number(to); n++)
       seats.push({ section, rows, number: n, price: Number(price) });
-    }
     run(
       () => seatApi.post("/createSeat", { eventId, seats }),
-      `${seats.length} seats added.`,
+      `${seats.length} seats added 💺`,
     );
   };
-
   const checkIn = (e) => {
     e.preventDefault();
     run(async () => {
       await ticketApi.patch("/checkedIn", { code });
       setCode("");
-    }, "Ticket checked in.");
+    }, "Ticket checked in ✅");
   };
-
   const set = (setter) => (e) =>
     setter((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Organizer dashboard</h1>
+      <h1 className="text-4xl font-black">
+        Organizer <span className="grad-text">dashboard</span>
+      </h1>
       {msg.text && (
         <p
-          className={`text-sm ${msg.type === "ok" ? "text-green-700" : "text-red-600"}`}
+          className={`glass px-4 py-3 text-sm font-semibold ${msg.type === "ok" ? "text-emerald-600" : "text-rose-600"}`}
         >
           {msg.text}
         </p>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <form
-          onSubmit={createEvent}
-          className="bg-white border border-stone-200 rounded-xl p-5 space-y-3"
-        >
-          <h2 className="font-semibold">Create event</h2>
+      <div className="scene grid md:grid-cols-2 gap-6">
+        <form onSubmit={createEvent} className="tilt glass p-6 space-y-3">
+          <h2 className="font-extrabold text-lg">✨ Create event</h2>
           <input
-            className={field}
+            className="field"
             name="name"
             placeholder="Event name"
             value={form.name}
@@ -137,7 +119,7 @@ export default function Dashboard() {
             required
           />
           <input
-            className={field}
+            className="field"
             name="city"
             placeholder="City"
             value={form.city}
@@ -145,7 +127,7 @@ export default function Dashboard() {
             required
           />
           <textarea
-            className={field}
+            className="field"
             name="descrpition"
             placeholder="Description"
             value={form.descrpition}
@@ -153,7 +135,7 @@ export default function Dashboard() {
             required
           />
           <select
-            className={field}
+            className="field"
             name="Status"
             value={form.Status}
             onChange={set(setForm)}
@@ -161,16 +143,15 @@ export default function Dashboard() {
             <option value="PENDDING">PENDDING</option>
             <option value="CANCELLED">CANCELLED</option>
           </select>
-          <button className={btn}>Create event</button>
+          <button className="btn btn-grad rounded-xl w-full">
+            Create event
+          </button>
         </form>
 
-        <form
-          onSubmit={addSeats}
-          className="bg-white border border-stone-200 rounded-xl p-5 space-y-3"
-        >
-          <h2 className="font-semibold">Add seats</h2>
+        <form onSubmit={addSeats} className="tilt glass p-6 space-y-3">
+          <h2 className="font-extrabold text-lg">💺 Add seats</h2>
           <select
-            className={field}
+            className="field"
             name="eventId"
             value={seatForm.eventId}
             onChange={set(setSeatForm)}
@@ -185,7 +166,7 @@ export default function Dashboard() {
           </select>
           <div className="grid grid-cols-2 gap-3">
             <input
-              className={field}
+              className="field"
               name="section"
               placeholder="Section (A)"
               value={seatForm.section}
@@ -193,7 +174,7 @@ export default function Dashboard() {
               required
             />
             <input
-              className={field}
+              className="field"
               name="rows"
               placeholder="Row (1)"
               value={seatForm.rows}
@@ -201,26 +182,26 @@ export default function Dashboard() {
               required
             />
             <input
-              className={field}
+              className="field"
               type="number"
               min="1"
               name="from"
-              placeholder="First seat no."
+              placeholder="First seat"
               value={seatForm.from}
               onChange={set(setSeatForm)}
             />
             <input
-              className={field}
+              className="field"
               type="number"
               min="1"
               name="to"
-              placeholder="Last seat no."
+              placeholder="Last seat"
               value={seatForm.to}
               onChange={set(setSeatForm)}
             />
           </div>
           <input
-            className={field}
+            className="field"
             type="number"
             min="0"
             name="price"
@@ -228,56 +209,58 @@ export default function Dashboard() {
             value={seatForm.price}
             onChange={set(setSeatForm)}
           />
-          <button className={btn}>Add seats</button>
+          <button className="btn btn-grad rounded-xl w-full">Add seats</button>
         </form>
       </div>
 
-      <form
-        onSubmit={checkIn}
-        className="bg-white border border-stone-200 rounded-xl p-5 flex gap-3 items-end"
-      >
+      <form onSubmit={checkIn} className="glass p-6 flex gap-3 items-end">
         <div className="flex-1">
-          <h2 className="font-semibold mb-2">Check in a ticket</h2>
+          <h2 className="font-extrabold text-lg mb-2">✅ Check in a ticket</h2>
           <input
-            className={field}
+            className="field"
             placeholder="Ticket code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
           />
         </div>
-        <button className={btn}>Check in</button>
+        <button className="btn btn-grad rounded-xl">Check in</button>
       </form>
 
       <section className="space-y-3">
-        <h2 className="font-semibold">Your events</h2>
+        <h2 className="font-extrabold text-lg">Your events</h2>
         {events.length === 0 && (
-          <p className="text-stone-500">You have not created any events yet.</p>
+          <div className="glass p-6 text-slate-500">
+            You have not created any events yet.
+          </div>
         )}
         {events.map((ev) => (
           <div
             key={ev._id}
-            className="bg-white border border-stone-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-3"
+            className="glass p-4 flex flex-wrap justify-between items-center gap-3"
           >
             <div>
-              <p className="font-semibold">{ev.name}</p>
-              <p className="text-sm text-stone-500">
-                {ev.city} · {ev.Status}
+              <p className="font-bold">{ev.name}</p>
+              <p className="text-sm text-slate-500">
+                📍 {ev.city} · {ev.Status}
               </p>
             </div>
             <div className="flex gap-2">
-              <Link href={`/events/${ev._id}`} className="btn btn-sm bg-white">
+              <Link
+                href={`/events/${ev._id}`}
+                className="btn btn-sm btn-soft rounded-lg"
+              >
                 View
               </Link>
               <button
                 onClick={() => toggleCancel(ev)}
-                className="btn btn-sm bg-white"
+                className="btn btn-sm btn-soft rounded-lg"
               >
-                {ev.Status === "CANCELLED" ? "Reactivate" : "Cancel event"}
+                {ev.Status === "CANCELLED" ? "Reactivate" : "Cancel"}
               </button>
               <button
-                onClick={() => deleteEvent(ev._id)}
-                className="btn btn-sm bg-white text-red-600"
+                onClick={() => del(ev._id)}
+                className="btn btn-sm btn-soft rounded-lg text-rose-600"
               >
                 Delete
               </button>

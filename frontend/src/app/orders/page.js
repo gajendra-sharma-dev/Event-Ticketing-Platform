@@ -7,6 +7,12 @@ import { orderApi, errMsg } from "@/db/api";
 
 const FILTERS = ["", "PANDDING", "PAID", "CANCELLED", "REFUNDED"];
 const label = (s) => (s === "PANDDING" ? "PENDING" : s);
+const color = {
+  PANDDING: "bg-amber-100 text-amber-700",
+  PAID: "bg-emerald-100 text-emerald-700",
+  CANCELLED: "bg-rose-100 text-rose-600",
+  REFUNDED: "bg-sky-100 text-sky-700",
+};
 
 export default function MyOrders() {
   const router = useRouter();
@@ -26,18 +32,19 @@ export default function MyOrders() {
       .get("/getMyOrder", {
         params: { page, limit: 10, status: status || undefined },
       })
-      .then((res) => {
-        setOrders(res.data.data.orders);
-        setPages(res.data.data.pages || 1);
+      .then((r) => {
+        setOrders(r.data.data.orders);
+        setPages(r.data.data.pages || 1);
       })
       .catch((e) => setError(errMsg(e)))
       .finally(() => setLoading(false));
   }, [page, status, user, authLoading, router]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-bold">My orders</h1>
-
+    <div className="max-w-3xl mx-auto p-6 space-y-5">
+      <h1 className="text-4xl font-black">
+        My <span className="grad-text">orders</span>
+      </h1>
       <div className="flex gap-2 flex-wrap">
         {FILTERS.map((f) => (
           <button
@@ -46,59 +53,60 @@ export default function MyOrders() {
               setStatus(f);
               setPage(1);
             }}
-            className={`btn btn-sm ${status === f ? "bg-red-500 text-white border-none" : "bg-white"}`}
+            className={`btn btn-sm rounded-full ${status === f ? "btn-grad" : "btn-soft"}`}
           >
             {f ? label(f) : "ALL"}
           </button>
         ))}
       </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-      {loading && <p className="text-stone-500">Loading...</p>}
+      {error && <p className="text-rose-600">{error}</p>}
+      {loading && <p className="text-slate-500">Loading...</p>}
       {!loading && orders.length === 0 && (
-        <p className="text-stone-500">
-          No orders here yet.{" "}
-          <Link href="/" className="text-red-500 underline">
+        <div className="glass p-8 text-center text-slate-500">
+          No orders yet.{" "}
+          <Link href="/" className="text-violet-600 font-bold underline">
             Find an event
           </Link>
-        </p>
+        </div>
       )}
 
-      {orders.map((o) => (
-        <Link
-          key={o._id}
-          href={`/orders/${o._id}`}
-          className="block bg-white border border-stone-200 rounded-xl p-4 hover:shadow-md transition"
-        >
-          <div className="flex justify-between items-start">
+      <div className="scene space-y-4">
+        {orders.map((o) => (
+          <Link
+            key={o._id}
+            href={`/orders/${o._id}`}
+            className="tilt glass flex justify-between items-center p-5"
+          >
             <div>
-              <p className="font-semibold">{o.eventId?.name || "Event"}</p>
-              <p className="text-sm text-stone-500">
-                {o.eventId?.city} · {new Date(o.createdAt).toLocaleString()}
+              <p className="font-bold text-lg">{o.eventId?.name || "Event"}</p>
+              <p className="text-sm text-slate-500">
+                📍 {o.eventId?.city} · {new Date(o.createdAt).toLocaleString()}
               </p>
             </div>
-            <div className="text-right">
-              <p className="font-bold">₹{o.totelAmmout}</p>
-              <span className="badge badge-outline">{label(o.Status)}</span>
+            <div className="text-right space-y-1">
+              <p className="grad-text font-black text-2xl">₹{o.totelAmmout}</p>
+              <span className={`badge border-0 ${color[o.Status]}`}>
+                {label(o.Status)}
+              </span>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        ))}
+      </div>
 
       {pages > 1 && (
-        <div className="join">
+        <div className="flex items-center gap-3">
           <button
-            className="join-item btn"
+            className="btn btn-sm btn-soft"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
             «
           </button>
-          <button className="join-item btn">
-            Page {page} of {pages}
-          </button>
+          <span className="font-semibold">
+            Page {page} / {pages}
+          </span>
           <button
-            className="join-item btn"
+            className="btn btn-sm btn-soft"
             disabled={page >= pages}
             onClick={() => setPage(page + 1)}
           >
