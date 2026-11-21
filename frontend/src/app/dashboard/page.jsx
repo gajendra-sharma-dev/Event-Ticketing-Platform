@@ -18,7 +18,7 @@ export default function Dashboard() {
     name: "",
     city: "",
     descrpition: "",
-    Status: "ACTIVE",
+    Status: "PENDDING",
   });
   const [seatForm, setSeatForm] = useState({
     eventId: "",
@@ -65,7 +65,7 @@ export default function Dashboard() {
     e.preventDefault();
     run(async () => {
       await eventApi.post("/createEvent", form);
-      setForm({ name: "", city: "", descrpition: "", Status: "ACTIVE" });
+      setForm({ name: "", city: "", descrpition: "", Status: "PENDDING" });
     }, "Event created.");
   };
 
@@ -76,7 +76,7 @@ export default function Dashboard() {
           name: ev.name,
           city: ev.city,
           descrpition: ev.descrpition,
-          Status: ev.Status === "CANCELLED" ? "ACTIVE" : "CANCELLED",
+          Status: ev.Status === "CANCELLED" ? "PENDDING" : "CANCELLED",
         }),
       "Event updated.",
     );
@@ -158,7 +158,7 @@ export default function Dashboard() {
             value={form.Status}
             onChange={set(setForm)}
           >
-            <option value="ACTIVE">ACTIVE</option>
+            <option value="PENDDING">PENDDING</option>
             <option value="CANCELLED">CANCELLED</option>
           </select>
           <button className={btn}>Create event</button>
