@@ -3,12 +3,13 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserContext } from "@/context/AuthProvider";
-import { eventApi, seatApi, ticketApi, errMsg } from "@/db/api";
+import { eventApi, seatApi, ticketApi, orderApi, errMsg } from "@/db/api";
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useContext(UserContext);
   const [events, setEvents] = useState([]);
+  const [reqs, setReqs] = useState([]);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const empty = { name: "", city: "", descrpition: "", Status: "PENDDING" };
   const [form, setForm] = useState(empty);
@@ -29,6 +30,8 @@ export default function Dashboard() {
       const r = await eventApi.get("/getAllEvent", { params: { limit: 100 } });
       const uid = String(user?._id || user?.user?._id || "");
       setEvents(r.data.data.event.filter((e) => String(e.user) === uid));
+      const rq = await orderApi.get("/refundRequests");
+      setReqs(rq.data.data);
     } catch (e) {
       say("error", errMsg(e));
     }
@@ -50,6 +53,41 @@ export default function Dashboard() {
       say("error", errMsg(e));
     }
   };
+
+  const approve = (id) =>
+    confirm(
+      "Approve and refund this order? Tickets are deleted and seats are released.",
+    ) && run(() => orderApi.patch(`/refundOrder/${id}`), "Refund done ↩️");
+  const reject = (id) =>
+    run(() => orderApi.patch(`/rejectRefund/${id}`), "Request rejected.");
+  const [tEvent, setTEvent] = useState("");
+  const [tickets, setTickets] = useState([]);
+  const loadTickets = useCallback(async (id) => {
+    if (!id) return setTickets([]);
+    try {
+      const r = await ticketApi.get(`/getTicketByEvent/${id}`, {
+        params: { limit: 50 },
+      });
+      setTickets(r.data.data.tickets);
+    } catch (e) {
+      say("error", errMsg(e));
+    }
+  }, []);
+  useEffect(() => {
+    loadTickets(tEvent);
+  }, [tEvent, loadTickets]);
+  const refund = (orderId) =>
+    confirm(
+      "Refund this whole order? Tickets are deleted and seats are released.",
+    ) &&
+    run(async () => {
+      await orderApi.patch(`/refundOrder/${orderId}`);
+      await loadTickets(tEvent);
+    }, "Order refunded ↩️");
+  const byOrder = tickets.reduce((g, t) => {
+    (g[t.orderId] ||= []).push(t);
+    return g;
+  }, {});
 
   const createEvent = (e) => {
     e.preventDefault();
@@ -134,15 +172,6 @@ export default function Dashboard() {
             onChange={set(setForm)}
             required
           />
-          <select
-            className="field"
-            name="Status"
-            value={form.Status}
-            onChange={set(setForm)}
-          >
-            <option value="PENDDING">PENDDING</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
           <button className="btn btn-grad rounded-xl w-full">
             Create event
           </button>
@@ -226,6 +255,112 @@ export default function Dashboard() {
         </div>
         <button className="btn btn-grad rounded-xl">Check in</button>
       </form>
+
+      <section className="glass p-6 space-y-4">
+        <h2 className="font-extrabold text-lg">
+          📩 Refund requests{" "}
+          {reqs.length > 0 && (
+            <span className="badge border-0 bg-rose-500 text-white">
+              {reqs.length}
+            </span>
+          )}
+        </h2>
+        {reqs.length === 0 && (
+          <p className="text-slate-500 text-sm">No pending refund requests.</p>
+        )}
+        {reqs.map((o) => (
+          <div
+            key={o._id}
+            className="bg-white/80 border border-violet-100 rounded-xl p-4 space-y-2"
+          >
+            <div className="flex justify-between gap-3">
+              <div>
+                <p className="font-bold">
+                  {o.eventId?.name} · {o.seats?.length} seat(s)
+                </p>
+                <p className="text-sm text-slate-500">
+                  {o.customer?.username} ({o.customer?.email})
+                </p>
+              </div>
+              <p className="grad-text font-black text-xl">₹{o.totelAmmout}</p>
+            </div>
+            <p className="text-sm bg-amber-50 border border-amber-200 rounded-lg p-3">
+              “{o.refundRequest?.reason}”
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => approve(o._id)}
+                className="btn btn-sm btn-grad rounded-lg"
+              >
+                Approve &amp; refund
+              </button>
+              <button
+                onClick={() => reject(o._id)}
+                className="btn btn-sm btn-soft rounded-lg text-rose-600"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="glass p-6 space-y-4">
+        <h2 className="font-extrabold text-lg">
+          🎫 Sold tickets &amp; refunds
+        </h2>
+        <select
+          className="field"
+          value={tEvent}
+          onChange={(e) => setTEvent(e.target.value)}
+        >
+          <option value="">Select event</option>
+          {events.map((ev) => (
+            <option key={ev._id} value={ev._id}>
+              {ev.name}
+            </option>
+          ))}
+        </select>
+        {tEvent && tickets.length === 0 && (
+          <p className="text-slate-500 text-sm">
+            No tickets issued for this event yet.
+          </p>
+        )}
+        {Object.entries(byOrder).map(([orderId, list]) => {
+          const used = list.some((t) => t.checkedInAt);
+          return (
+            <div
+              key={orderId}
+              className="bg-white/80 border border-violet-100 rounded-xl p-4 space-y-2"
+            >
+              <div className="flex justify-between items-center gap-3">
+                <p className="text-xs text-slate-500 font-mono break-all">
+                  Order {orderId}
+                </p>
+                <button
+                  onClick={() => refund(orderId)}
+                  disabled={used}
+                  title={used ? "Has checked-in tickets" : ""}
+                  className="btn btn-sm btn-soft rounded-lg text-rose-600"
+                >
+                  ↩ Refund order
+                </button>
+              </div>
+              {list.map((t) => (
+                <div key={t._id} className="flex justify-between text-sm">
+                  <span>
+                    Section {t.seatId?.section} · Row {t.seatId?.rows} · Seat{" "}
+                    {t.seatId?.number}
+                  </span>
+                  <span className="font-mono text-xs">
+                    {t.code.slice(0, 8)}… {t.checkedInAt ? "✅ in" : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-extrabold text-lg">Your events</h2>

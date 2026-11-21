@@ -28,6 +28,15 @@ const orderSchema = new Schema(
         ref: "Seat",
       },
     ],
+    refundRequest: {
+      status: {
+        type: String,
+        enum: ["NONE", "REQUESTED", "REJECTED"],
+        default: "NONE",
+      },
+      reason: { type: String, default: "" },
+      requestedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

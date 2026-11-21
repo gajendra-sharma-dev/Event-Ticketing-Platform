@@ -276,6 +276,81 @@ const getMyOrders = asynchandler(async (req, res) => {
       ),
     );
 });
+// customer asks the organizer for a refund
+const requestRefund = asynchandler(async (req, res) => {
+  const { orderId } = req.params;
+  const reason = String(req.body.reason || "").trim();
+
+  if (!mongoose.isValidObjectId(orderId))
+    throw new ApiError(400, "order id is not correct form");
+  if (!reason) throw new ApiError(400, "please write a reason");
+
+  const order = await Order.findById(orderId);
+  if (!order) throw new ApiError(404, "order not found");
+  if (order.customer?.toString() !== req.user?._id.toString())
+    throw new ApiError(
+      403,
+      "you can not authorised to ask refund for this order",
+    );
+  if (order.Status !== "PAID")
+    throw new ApiError(400, "only paid order can be refunded");
+  if (order.refundRequest?.status === "REQUESTED")
+    throw new ApiError(409, "refund already requested");
+
+  const used = await Ticket.exists({ orderId, checkedInAt: { $ne: null } });
+  if (used)
+    throw new ApiError(400, "order has checked in tickets, can not be refund");
+
+  order.refundRequest = {
+    status: "REQUESTED",
+    reason,
+    requestedAt: new Date(),
+  };
+  await order.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "refund request sent"));
+});
+
+// organizer: all pending refund requests for my events
+const getRefundRequests = asynchandler(async (req, res) => {
+  const events = await Event.find({ user: req.user?._id }).select("_id");
+  const orders = await Order.find({
+    eventId: { $in: events.map((e) => e._id) },
+    Status: "PAID",
+    "refundRequest.status": "REQUESTED",
+  })
+    .populate("customer", "username email")
+    .populate("eventId", "name city")
+    .populate("seats")
+    .sort({ "refundRequest.requestedAt": -1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, orders, "refund requests get successfully"));
+});
+
+// organizer says no
+const rejectRefund = asynchandler(async (req, res) => {
+  const { orderId } = req.params;
+  if (!mongoose.isValidObjectId(orderId))
+    throw new ApiError(400, "order id is not correct form");
+
+  const order = await Order.findById(orderId).populate("eventId");
+  if (!order) throw new ApiError(404, "order not found");
+  if (order.eventId?.user?.toString() !== req.user?._id.toString())
+    throw new ApiError(403, "you can not authorised to reject this request");
+  if (order.refundRequest?.status !== "REQUESTED")
+    throw new ApiError(400, "there is no pending refund request");
+
+  order.refundRequest.status = "REJECTED";
+  await order.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "refund request rejected"));
+});
 
 export {
   createOrder,
@@ -284,4 +359,7 @@ export {
   getMyOrders,
   cancelOrder,
   refundedOrder,
+  requestRefund,
+  getRefundRequests,
+  rejectRefund,
 };

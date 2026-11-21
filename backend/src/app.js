@@ -39,6 +39,10 @@ import refundedOrderRouter from "./router/order.router.js";
 import getOrderByIdRouter from "./router/order.router.js";
 import getMyOrderRouter from "./router/order.router.js";
 import cancelOrderRouter from "./router/order.router.js";
+import requestrefundOrderRouter from "./router/order.router.js";
+import refundRequestRouter from "./router/order.router.js";
+
+import rejectrefundOrderRouter from "./router/order.router.js";
 
 import createSeatRouter from "./router/seat.router.js";
 import getSeatByIdRouter from "./router/seat.router.js";
@@ -72,7 +76,10 @@ app.use("/api/v2/users/order", payOrderRouter);
 app.use("/api/v2/users/order", refundedOrderRouter);
 app.use("/api/v2/users/order", getOrderByIdRouter);
 app.use("/api/v2/users/order", getMyOrderRouter);
+app.use("/api/v2/users/order", requestrefundOrderRouter);
 app.use("/api/v2/users/order", cancelOrderRouter);
+app.use("/api/v2/users/order", refundRequestRouter);
+app.use("/api/v2/users/order", rejectrefundOrderRouter);
 
 app.use("/api/v2/users/seats", createSeatRouter);
 app.use("/api/v2/users/seats", getSeatByEventRouter);

@@ -46,6 +46,12 @@ export default function OrderPage() {
   };
   const pay = () => act(() => orderApi.patch(`/payOrder/${orderId}`));
   const cancel = () => act(() => orderApi.patch(`/cancelOrder/${orderId}`));
+  const [reason, setReason] = useState("");
+  const requestRefund = () =>
+    act(async () => {
+      await orderApi.patch(`/requestRefund/${orderId}`, { reason });
+      setReason("");
+    });
   const issue = () =>
     act(() =>
       ticketApi.post("/createTicket", {
@@ -110,6 +116,39 @@ export default function OrderPage() {
               </button>
             </div>
           )}
+          {paid &&
+            !tickets.some((t) => t.checkedInAt) &&
+            (order.refundRequest?.status === "REQUESTED" ? (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm">
+                <p className="font-bold text-amber-700">
+                  ⏳ Refund requested, waiting for the organizer
+                </p>
+                <p className="text-slate-600 mt-1">
+                  Your reason: {order.refundRequest.reason}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {order.refundRequest?.status === "REJECTED" && (
+                  <p className="text-sm text-rose-600 font-semibold">
+                    Your last refund request was rejected. You can ask again.
+                  </p>
+                )}
+                <textarea
+                  className="field"
+                  placeholder="Why do you want a refund?"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+                <button
+                  onClick={requestRefund}
+                  disabled={busy || !reason.trim()}
+                  className="btn btn-soft w-full rounded-xl text-rose-600"
+                >
+                  ↩ Request refund
+                </button>
+              </div>
+            ))}
           {paid && tickets.length === 0 && (
             <button
               onClick={issue}
