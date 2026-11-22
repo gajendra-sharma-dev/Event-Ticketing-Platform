@@ -1,34 +1,26 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
-:root { --accent: #5b2be0; }
-body { background: #fff; color: #111; }
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
 
-/* same class names as before, restyled in a clean District-like look */
-.bg-mesh { background: #fff; }
-.grad-text { color: var(--accent); }
-.btn-grad { background: #111; color: #fff; border: none; border-radius: .9rem; transition: .15s; }
-.btn-grad:hover:not(:disabled) { background: #333; transform: translateY(-1px); }
-.btn-grad:disabled { opacity: .45; color: #fff; }
-.btn-soft { background: #fff; border: 1px solid #e5e7eb; color: #111; border-radius: .9rem; }
-.btn-soft:hover { background: #f5f3ff; border-color: #c4b5fd; }
-.glass { background: #fff; border: 1px solid #ececf1; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-.field { width: 100%; padding: .7rem 1rem; border-radius: .8rem; background: #fff; border: 1px solid #e5e7eb; outline: none; }
-.field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #ddd6fe; }
-.scene { perspective: 1200px; }
-.tilt { transition: transform .25s ease, box-shadow .25s; }
-.tilt:hover { transform: translateY(-5px); box-shadow: 0 18px 30px -16px rgba(0,0,0,.25); }
-.stage { background: #111; transform: perspective(420px) rotateX(-28deg); box-shadow: 0 16px 30px -10px rgba(0,0,0,.35); }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
 
-.seat { width: 2.3rem; height: 2.3rem; flex-shrink: 0; border-radius: .6rem .6rem .3rem .3rem; font-size: .72rem; font-weight: 700; color: #3f3f46; background: #fff; border: 1px solid #d4d4d8; box-shadow: 0 3px 0 #e4e4e7; transition: .15s; }
-.seat:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 6px 0 #ddd6fe; }
-.seat.sel { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(2px); box-shadow: 0 1px 0 #3b1aa8; }
-.seat.held { background: #fef3c7; border-color: #fcd34d; color: #92400e; box-shadow: none; cursor: not-allowed; }
-.seat.sold { background: #e5e7eb; border-color: #e5e7eb; color: #9ca3af; box-shadow: none; cursor: not-allowed; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
 
-.stub { position: relative; background: #fff; border: 1px solid #ececf1; border-radius: 1rem; box-shadow: 0 8px 20px -12px rgba(0,0,0,.25); }
-.stub::before, .stub::after { content: ""; position: absolute; top: 50%; width: 1.4rem; height: 1.4rem; border-radius: 9999px; background: #fff; border: 1px solid #ececf1; transform: translateY(-50%); }
-.stub::before { left: -.7rem; } .stub::after { right: -.7rem; }
-
-.poster-in { animation: fadein .5s ease; }
-@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
