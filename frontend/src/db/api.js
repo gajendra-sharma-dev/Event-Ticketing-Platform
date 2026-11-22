@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const base = "http://localhost:5000/api/v2/users";
+const base =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v2/users";
 
 const make = (path) => {
   const instance = axios.create({
