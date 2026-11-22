@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { User } from "../model/user.model.js";
 import mongoose from "mongoose";
 import { Event } from "../model/event.model.js";
+import { uploadImage } from "../utils/cloudinary.js";
 
 const createEvent = asynchandler(async (req, res) => {
   const { name, city, descrpition, Status } = req.body;
@@ -22,11 +23,19 @@ const createEvent = asynchandler(async (req, res) => {
     throw new ApiError(400, "user not found");
   }
 
+  // image is optional: upload to Cloudinary only if a file was sent
+  let image = "";
+  if (req.file) {
+    const uploaded = await uploadImage(req.file.buffer);
+    image = uploaded.secure_url;
+  }
+
   const createEvent = await Event.create({
     name,
     descrpition,
     city,
     Status,
+    image,
     user: req.user?._id,
   });
   return res
@@ -34,6 +43,8 @@ const createEvent = asynchandler(async (req, res) => {
     .json(new ApiResponse(200, createEvent, "Event create successfully"));
 });
 
+// getAllEvent and GetEventById already return the whole event document,
+// so the `image` link comes back automatically. No change needed there.
 const getAllEvent = asynchandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -103,16 +114,16 @@ const updateEvent = asynchandler(async (req, res) => {
     throw new ApiError(400, "you can not authorised to update this event");
   }
 
+  // only touch `image` when a new file was sent, otherwise keep the old one
+  const set = { name, city, descrpition, Status };
+  if (req.file) {
+    const uploaded = await uploadImage(req.file.buffer);
+    set.image = uploaded.secure_url;
+  }
+
   const updatedevent = await Event.findByIdAndUpdate(
     eventId,
-    {
-      $set: {
-        name,
-        city,
-        descrpition,
-        Status,
-      },
-    },
+    { $set: set },
     { new: true },
   );
 
@@ -141,7 +152,7 @@ const DeleteEvent = asynchandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "event update successfully"));
+    .json(new ApiResponse(200, {}, "event delete successfully"));
 });
 
 export { createEvent, getAllEvent, GetEventById, updateEvent, DeleteEvent };

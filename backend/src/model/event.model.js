@@ -24,6 +24,7 @@ const eventSchema = new Schema(
       enum: ["PENDDING", "CANCELLED"],
       default: "PENDDING",
     },
+    image: { type: String, default: "" },
   },
   { timestamps: true },
 );
