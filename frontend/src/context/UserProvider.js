@@ -4,7 +4,7 @@ import React, { createContext, useState, useCallback, useEffect } from "react";
 import { api } from "@/db/api";
 import { useContext } from "react";
 
-export const Authcontext = createContext(null);
+export const UserContext = createContext(null);
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -16,10 +16,10 @@ export function UserProvider({ children }) {
       const res = await api.get("/getUser");
       setUser(res.data.data);
       setError("");
-    } catch (err) {
+    } catch (error) {
       setUser(null);
 
-      if (err?.response?.status !== 401)
+      if (error?.response?.status !== 401)
         setError(
           error.response?.data?.errors ||
             error.response?.data?.message ||
@@ -61,7 +61,7 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <Authcontext.Provider
+    <UserContext.Provider
       value={{
         register,
         login,
@@ -74,6 +74,6 @@ export function UserProvider({ children }) {
       }}
     >
       {children}
-    </Authcontext.Provider>
+    </UserContext.Provider>
   );
 }
